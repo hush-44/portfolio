@@ -144,6 +144,12 @@ h1, h2, h3, p { margin-top: 0; }
 .resume-inner .eyebrow { margin-bottom: 12px; color: #59632e; }
 .resume-inner h2 { font-size: 34px; letter-spacing: -1.6px; }
 .resume-inner p:last-child { margin: 9px 0 0; color: #596044; font-size: 12px; }
+.resume-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cv-upload-control { position: relative; display: inline-flex; min-height: 48px; align-items: center; padding: 0 15px; border: 1px solid rgba(32, 33, 30, .55); color: var(--ink); font-size: 11px; font-weight: 700; cursor: pointer; }
+.cv-upload-control:hover { background: rgba(32, 33, 30, .06); }
+.cv-upload-control input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+.cv-upload-control:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
+.cv-status { flex-basis: 100%; margin: -4px 0 0; color: #596044; font-family: var(--mono); font-size: 9px; }
 .button-light { color: #f5f4ef; background: var(--ink); }
 .button-light:hover { background: #404239; }
 
@@ -234,6 +240,8 @@ h1, h2, h3, p { margin-top: 0; }
   .service-tools { display: none; }
   .resume-band { padding: 38px 0; }
   .resume-inner { align-items: flex-start; flex-direction: column; gap: 23px; }
+  .resume-actions { gap: 9px; }
+  .resume-actions .button, .cv-upload-control { min-height: 43px; }
   .resume-inner h2 { font-size: 29px; }
   .contact-section { padding-top: 82px; padding-bottom: 65px; }
   .contact-section h2 { font-size: clamp(58px, 14vw, 78px); letter-spacing: -4px; }

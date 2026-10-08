@@ -203,6 +203,107 @@ const addImageControl = (slot, imageId, labelText) => {
   });
 };
 
+const openCvDatabase = () => new Promise((resolve, reject) => {
+  if (!window.indexedDB) {
+    reject(new Error('Persistent browser storage is unavailable.'));
+    return;
+  }
+
+  const request = window.indexedDB.open('olasunkanmi-portfolio-files', 1);
+  request.onupgradeneeded = () => {
+    if (!request.result.objectStoreNames.contains('documents')) {
+      request.result.createObjectStore('documents');
+    }
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error || new Error('Could not open browser storage.'));
+});
+
+const getSavedCv = async () => {
+  const database = await openCvDatabase();
+  return new Promise((resolve, reject) => {
+    const request = database.transaction('documents', 'readonly').objectStore('documents').get('cv');
+    request.onsuccess = () => {
+      database.close();
+      resolve(request.result || null);
+    };
+    request.onerror = () => {
+      database.close();
+      reject(request.error || new Error('Could not read the saved CV.'));
+    };
+  });
+};
+
+const storeCv = async (file) => {
+  const database = await openCvDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction('documents', 'readwrite');
+    transaction.objectStore('documents').put({ file, filename: file.name }, 'cv');
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error || new Error('Could not save the CV.'));
+    };
+    transaction.onabort = () => {
+      database.close();
+      reject(transaction.error || new Error('CV storage was interrupted.'));
+    };
+  });
+};
+
+const setupCvUpload = () => {
+  const picker = document.querySelector('.cv-upload-control input[type="file"]');
+  const uploadLabel = document.querySelector('.cv-upload-control');
+  const uploadText = uploadLabel?.querySelector('span');
+  const status = document.querySelector('[data-cv-status]');
+  const cvLinks = [...document.querySelectorAll('[data-cv-link]')];
+  let activeUrl = null;
+
+  if (!picker || !uploadLabel || !uploadText || cvLinks.length === 0) return;
+  uploadLabel.hidden = false;
+
+  const useCv = (file, filename) => {
+    if (activeUrl) URL.revokeObjectURL(activeUrl);
+    activeUrl = URL.createObjectURL(file);
+    cvLinks.forEach((link) => {
+      link.href = activeUrl;
+      link.title = filename;
+      if (link.hasAttribute('data-cv-download')) link.download = filename;
+    });
+    uploadText.textContent = 'Change CV PDF';
+    if (status) status.textContent = `Ready: ${filename}`;
+  };
+
+  getSavedCv().then((savedCv) => {
+    if (savedCv?.file instanceof Blob) useCv(savedCv.file, savedCv.filename || 'olasunkanmi-daniel-cv.pdf');
+  }).catch(() => {
+    if (status) status.textContent = 'Choose your CV PDF to use it in this browser session.';
+  });
+
+  picker.addEventListener('change', async () => {
+    const [file] = picker.files;
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      window.alert('Choose a PDF file to continue.');
+      picker.value = '';
+      return;
+    }
+
+    if (status) status.textContent = 'Saving your CV…';
+    useCv(file, file.name);
+    try {
+      await storeCv(file);
+      if (status) status.textContent = `Ready: ${file.name}`;
+    } catch {
+      if (status) status.textContent = `Ready for this session only: ${file.name}`;
+    }
+    picker.value = '';
+  });
+};
+
 document.querySelectorAll('[data-image-id]').forEach((slot) => {
   const imageId = slot.dataset.imageId;
   const image = slot.querySelector('img');
@@ -220,3 +321,5 @@ document.querySelectorAll('[data-image-id]').forEach((slot) => {
 
   if (localEditingEnabled) addImageControl(slot, imageId, labelText);
 });
+
+if (localEditingEnabled) setupCvUpload();
