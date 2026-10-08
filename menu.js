@@ -87,6 +87,32 @@ if (localEditingEnabled) {
     project.append(button);
     attachTextEditor(button, fields, `project-details-${project.dataset.projectEditor}`, 'Edit details');
   });
+
+  const publishTools = document.createElement('div');
+  const publishButton = document.createElement('button');
+  const publishStatus = document.createElement('p');
+  publishTools.className = 'publish-tools';
+  publishButton.className = 'publish-button';
+  publishButton.type = 'button';
+  publishButton.textContent = 'Save changes to website';
+  publishStatus.className = 'publish-status';
+  publishStatus.setAttribute('role', 'status');
+  publishTools.append(publishButton, publishStatus);
+  document.body.append(publishTools);
+
+  publishButton.addEventListener('click', async () => {
+    publishButton.disabled = true;
+    publishStatus.textContent = '';
+    try {
+      await publishLocalChanges(publishStatus);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        publishStatus.textContent = error.message || 'Could not save the website files.';
+      }
+    } finally {
+      publishButton.disabled = false;
+    }
+  });
 }
 
 if (header && menuButton && navigation) {
@@ -285,6 +311,66 @@ const storeCv = async (file) => {
       reject(transaction.error || new Error('CV storage was interrupted.'));
     };
   });
+};
+
+const writeFile = async (directory, filename, contents) => {
+  const fileHandle = await directory.getFileHandle(filename, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(contents);
+  await writable.close();
+};
+
+const publishLocalChanges = async (status) => {
+  if (!window.showDirectoryPicker) {
+    throw new Error('Open this page in Chrome or Edge at localhost:5500 to save changes into your site folder.');
+  }
+
+  status.textContent = 'Choose your portfolio project folder…';
+  const root = await window.showDirectoryPicker({ mode: 'readwrite' });
+  const exportedDocument = document.documentElement.cloneNode(true);
+
+  exportedDocument.querySelectorAll('.image-upload-control, .project-edit-button, .section-edit-button, .publish-tools, .cv-status')
+    .forEach((control) => control.remove());
+  exportedDocument.querySelectorAll('[contenteditable]').forEach((field) => field.removeAttribute('contenteditable'));
+  exportedDocument.querySelectorAll('.cv-upload-control').forEach((control) => control.remove());
+
+  const assets = await root.getDirectoryHandle('assets', { create: true });
+  const uploadedImages = await assets.getDirectoryHandle('portfolio-images', { create: true });
+  let imageCount = 0;
+
+  for (const imageSlot of document.querySelectorAll('[data-image-id]')) {
+    const imageData = getSavedImage(imageSlot.dataset.imageId);
+    if (!imageData) continue;
+    const exportedSlot = exportedDocument.querySelector(`[data-image-id="${imageSlot.dataset.imageId}"]`);
+    if (!exportedSlot) continue;
+
+    const imageBlob = await (await fetch(imageData)).blob();
+    const imageName = `${imageSlot.dataset.imageId}.jpg`;
+    await writeFile(uploadedImages, imageName, imageBlob);
+
+    let exportedImage = exportedSlot.querySelector('img');
+    if (!exportedImage) {
+      exportedImage = document.createElement('img');
+      exportedSlot.prepend(exportedImage);
+    }
+    exportedImage.src = `./assets/portfolio-images/${imageName}`;
+    exportedImage.alt = exportedSlot.dataset.alt || 'Portfolio image';
+    exportedSlot.querySelector('.image-placeholder')?.remove();
+    imageCount += 1;
+  }
+
+  const savedCv = await getSavedCv().catch(() => null);
+  if (savedCv?.file instanceof Blob) {
+    await writeFile(assets, 'olasunkanmi-daniel-cv.pdf', savedCv.file);
+    const exportedViewer = exportedDocument.querySelector('[data-cv-viewer]');
+    exportedViewer.src = './assets/olasunkanmi-daniel-cv.pdf';
+    exportedViewer.dataset.cvSrc = './assets/olasunkanmi-daniel-cv.pdf';
+  }
+
+  const exportedHtml = `<!doctype html>\n${exportedDocument.outerHTML}`;
+  await writeFile(root, 'index.html', new Blob([exportedHtml], { type: 'text/html;charset=utf-8' }));
+  const cvMessage = savedCv?.file instanceof Blob ? ' CV included.' : '';
+  status.textContent = `Saved index.html and ${imageCount} uploaded image${imageCount === 1 ? '' : 's'}.${cvMessage} Stage and push these files to publish.`;
 };
 
 const setupCvUpload = () => {
