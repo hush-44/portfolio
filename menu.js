@@ -88,31 +88,6 @@ if (localEditingEnabled) {
     attachTextEditor(button, fields, `project-details-${project.dataset.projectEditor}`, 'Edit details');
   });
 
-  const publishTools = document.createElement('div');
-  const publishButton = document.createElement('button');
-  const publishStatus = document.createElement('p');
-  publishTools.className = 'publish-tools';
-  publishButton.className = 'publish-button';
-  publishButton.type = 'button';
-  publishButton.textContent = 'Save changes to website';
-  publishStatus.className = 'publish-status';
-  publishStatus.setAttribute('role', 'status');
-  publishTools.append(publishButton, publishStatus);
-  document.body.append(publishTools);
-
-  publishButton.addEventListener('click', async () => {
-    publishButton.disabled = true;
-    publishStatus.textContent = '';
-    try {
-      await publishLocalChanges(publishStatus);
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        publishStatus.textContent = error.message || 'Could not save the website files.';
-      }
-    } finally {
-      publishButton.disabled = false;
-    }
-  });
 }
 
 if (header && menuButton && navigation) {
@@ -153,6 +128,7 @@ if (cvDialog && cvViewer) {
 
   document.querySelectorAll('[data-cv-open]').forEach((link) => {
     link.addEventListener('click', (event) => {
+      if (window.matchMedia('(max-width: 640px)').matches) return;
       event.preventDefault();
       if (cvViewer.getAttribute('src') === 'about:blank') {
         cvViewer.src = cvViewer.dataset.cvSrc;
@@ -262,164 +238,6 @@ const addImageControl = (slot, imageId, labelText) => {
   });
 };
 
-const openCvDatabase = () => new Promise((resolve, reject) => {
-  if (!window.indexedDB) {
-    reject(new Error('Persistent browser storage is unavailable.'));
-    return;
-  }
-
-  const request = window.indexedDB.open('olasunkanmi-portfolio-files', 1);
-  request.onupgradeneeded = () => {
-    if (!request.result.objectStoreNames.contains('documents')) {
-      request.result.createObjectStore('documents');
-    }
-  };
-  request.onsuccess = () => resolve(request.result);
-  request.onerror = () => reject(request.error || new Error('Could not open browser storage.'));
-});
-
-const getSavedCv = async () => {
-  const database = await openCvDatabase();
-  return new Promise((resolve, reject) => {
-    const request = database.transaction('documents', 'readonly').objectStore('documents').get('cv');
-    request.onsuccess = () => {
-      database.close();
-      resolve(request.result || null);
-    };
-    request.onerror = () => {
-      database.close();
-      reject(request.error || new Error('Could not read the saved CV.'));
-    };
-  });
-};
-
-const storeCv = async (file) => {
-  const database = await openCvDatabase();
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction('documents', 'readwrite');
-    transaction.objectStore('documents').put({ file, filename: file.name }, 'cv');
-    transaction.oncomplete = () => {
-      database.close();
-      resolve();
-    };
-    transaction.onerror = () => {
-      database.close();
-      reject(transaction.error || new Error('Could not save the CV.'));
-    };
-    transaction.onabort = () => {
-      database.close();
-      reject(transaction.error || new Error('CV storage was interrupted.'));
-    };
-  });
-};
-
-const writeFile = async (directory, filename, contents) => {
-  const fileHandle = await directory.getFileHandle(filename, { create: true });
-  const writable = await fileHandle.createWritable();
-  await writable.write(contents);
-  await writable.close();
-};
-
-const publishLocalChanges = async (status) => {
-  if (!window.showDirectoryPicker) {
-    throw new Error('Open this page in Chrome or Edge at localhost:5500 to save changes into your site folder.');
-  }
-
-  status.textContent = 'Choose your portfolio project folder…';
-  const root = await window.showDirectoryPicker({ mode: 'readwrite' });
-  const exportedDocument = document.documentElement.cloneNode(true);
-
-  exportedDocument.querySelectorAll('.image-upload-control, .project-edit-button, .section-edit-button, .publish-tools, .cv-status')
-    .forEach((control) => control.remove());
-  exportedDocument.querySelectorAll('[contenteditable]').forEach((field) => field.removeAttribute('contenteditable'));
-  exportedDocument.querySelectorAll('.cv-upload-control').forEach((control) => control.remove());
-
-  const assets = await root.getDirectoryHandle('assets', { create: true });
-  const uploadedImages = await assets.getDirectoryHandle('portfolio-images', { create: true });
-  let imageCount = 0;
-
-  for (const imageSlot of document.querySelectorAll('[data-image-id]')) {
-    const imageData = getSavedImage(imageSlot.dataset.imageId);
-    if (!imageData) continue;
-    const exportedSlot = exportedDocument.querySelector(`[data-image-id="${imageSlot.dataset.imageId}"]`);
-    if (!exportedSlot) continue;
-
-    const imageBlob = await (await fetch(imageData)).blob();
-    const imageName = `${imageSlot.dataset.imageId}.jpg`;
-    await writeFile(uploadedImages, imageName, imageBlob);
-
-    let exportedImage = exportedSlot.querySelector('img');
-    if (!exportedImage) {
-      exportedImage = document.createElement('img');
-      exportedSlot.prepend(exportedImage);
-    }
-    exportedImage.src = `./assets/portfolio-images/${imageName}`;
-    exportedImage.alt = exportedSlot.dataset.alt || 'Portfolio image';
-    exportedSlot.querySelector('.image-placeholder')?.remove();
-    imageCount += 1;
-  }
-
-  const savedCv = await getSavedCv().catch(() => null);
-  if (savedCv?.file instanceof Blob) {
-    await writeFile(assets, 'olasunkanmi-daniel-cv.pdf', savedCv.file);
-    const exportedViewer = exportedDocument.querySelector('[data-cv-viewer]');
-    exportedViewer.src = './assets/olasunkanmi-daniel-cv.pdf';
-    exportedViewer.dataset.cvSrc = './assets/olasunkanmi-daniel-cv.pdf';
-  }
-
-  const exportedHtml = `<!doctype html>\n${exportedDocument.outerHTML}`;
-  await writeFile(root, 'index.html', new Blob([exportedHtml], { type: 'text/html;charset=utf-8' }));
-  const cvMessage = savedCv?.file instanceof Blob ? ' CV included.' : '';
-  status.textContent = `Saved index.html and ${imageCount} uploaded image${imageCount === 1 ? '' : 's'}.${cvMessage} Stage and push these files to publish.`;
-};
-
-const setupCvUpload = () => {
-  const picker = document.querySelector('.cv-upload-control input[type="file"]');
-  const uploadLabel = document.querySelector('.cv-upload-control');
-  const uploadText = uploadLabel?.querySelector('span');
-  const status = document.querySelector('[data-cv-status]');
-  const viewer = document.querySelector('[data-cv-viewer]');
-  let activeUrl = null;
-
-  if (!picker || !uploadLabel || !uploadText || !viewer) return;
-  uploadLabel.hidden = false;
-
-  const useCv = (file, filename) => {
-    if (activeUrl) URL.revokeObjectURL(activeUrl);
-    activeUrl = URL.createObjectURL(file);
-    viewer.src = activeUrl;
-    viewer.title = `Curriculum vitae: ${filename}`;
-    uploadText.textContent = 'Change CV PDF';
-    if (status) status.textContent = `Ready: ${filename}`;
-  };
-
-  getSavedCv().then((savedCv) => {
-    if (savedCv?.file instanceof Blob) useCv(savedCv.file, savedCv.filename || 'olasunkanmi-daniel-cv.pdf');
-  }).catch(() => {
-    if (status) status.textContent = 'Choose your CV PDF to use it in this browser session.';
-  });
-
-  picker.addEventListener('change', async () => {
-    const [file] = picker.files;
-    if (!file) return;
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      window.alert('Choose a PDF file to continue.');
-      picker.value = '';
-      return;
-    }
-
-    if (status) status.textContent = 'Saving your CV…';
-    useCv(file, file.name);
-    try {
-      await storeCv(file);
-      if (status) status.textContent = `Ready: ${file.name}`;
-    } catch {
-      if (status) status.textContent = `Ready for this session only: ${file.name}`;
-    }
-    picker.value = '';
-  });
-};
-
 document.querySelectorAll('[data-image-id]').forEach((slot) => {
   const imageId = slot.dataset.imageId;
   const image = slot.querySelector('img');
@@ -438,4 +256,3 @@ document.querySelectorAll('[data-image-id]').forEach((slot) => {
   if (localEditingEnabled) addImageControl(slot, imageId, labelText);
 });
 
-if (localEditingEnabled) setupCvUpload();
