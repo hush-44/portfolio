@@ -115,6 +115,39 @@ if (header && menuButton && navigation) {
   window.matchMedia('(min-width: 641px)').addEventListener('change', () => setMenuOpen(false));
 }
 
+const cvDialog = document.querySelector('#cv-dialog');
+const cvViewer = document.querySelector('[data-cv-viewer]');
+
+if (cvDialog && cvViewer) {
+  const closeButton = document.querySelector('[data-cv-close]');
+
+  cvViewer.addEventListener('load', () => {
+    if (cvDialog.open) closeButton?.focus({ preventScroll: true });
+  });
+
+  document.querySelectorAll('[data-cv-open]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (cvViewer.getAttribute('src') === 'about:blank') {
+        cvViewer.src = cvViewer.dataset.cvSrc;
+      }
+      cvDialog.showModal();
+      closeButton?.focus({ preventScroll: true });
+    });
+  });
+
+  closeButton?.addEventListener('click', () => cvDialog.close());
+  cvDialog.addEventListener('click', (event) => {
+    if (event.target === cvDialog) cvDialog.close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && cvDialog.open) {
+      event.preventDefault();
+      cvDialog.close();
+    }
+  });
+}
+
 const showImage = (slot, imageSource, altText) => {
   slot.querySelector('.image-placeholder')?.remove();
   let image = slot.querySelector('img');
@@ -259,20 +292,17 @@ const setupCvUpload = () => {
   const uploadLabel = document.querySelector('.cv-upload-control');
   const uploadText = uploadLabel?.querySelector('span');
   const status = document.querySelector('[data-cv-status]');
-  const cvLinks = [...document.querySelectorAll('[data-cv-link]')];
+  const viewer = document.querySelector('[data-cv-viewer]');
   let activeUrl = null;
 
-  if (!picker || !uploadLabel || !uploadText || cvLinks.length === 0) return;
+  if (!picker || !uploadLabel || !uploadText || !viewer) return;
   uploadLabel.hidden = false;
 
   const useCv = (file, filename) => {
     if (activeUrl) URL.revokeObjectURL(activeUrl);
     activeUrl = URL.createObjectURL(file);
-    cvLinks.forEach((link) => {
-      link.href = activeUrl;
-      link.title = filename;
-      if (link.hasAttribute('data-cv-download')) link.download = filename;
-    });
+    viewer.src = activeUrl;
+    viewer.title = `Curriculum vitae: ${filename}`;
     uploadText.textContent = 'Change CV PDF';
     if (status) status.textContent = `Ready: ${filename}`;
   };
