@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f4ef" />
+    <meta name="description" content="Olasunkanmi Daniel is a frontend website developer, graphic designer, and video editor." />
+    <title>Olasunkanmi Daniel — Frontend Developer & Creative Designer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./menu.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="#top" aria-label="Olasunkanmi Daniel, home">OD<span>.</span></a>
+      <nav class="main-nav" id="main-nav" aria-label="Main navigation">
+        <a href="#work">Work</a>
+        <a href="#about">About</a>
+        <a href="#services">Services</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="main-nav">
+          <span></span><span></span>
+        </button>
+        <a class="header-cta" href="./olasunkanmi-daniel-cv.pdf" target="_blank" rel="noopener">View CV <span aria-hidden="true">↗</span></a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero page-shell" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot"></span> Olasunkanmi Daniel · Frontend · Design · Video</p>
+          <h1 id="hero-title">Frontend developer<br />with a <span class="highlight">creative edge.</span></h1>
+          <p class="hero-intro">I'm Olasunkanmi Daniel, a frontend website developer, graphic designer, and video editor. I build thoughtful websites and bring ideas to life through visual design and motion.</p>
+          <div class="hero-actions">
+            <a class="button button-dark" href="#work">Explore my work <span aria-hidden="true">↘</span></a>
+            <a class="text-link" href="./olasunkanmi-daniel-cv.pdf" target="_blank" rel="noopener">Open my CV <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="hero-meta"><span>Websites</span><span class="meta-rule"></span><span>Graphics + motion</span></div>
+        </div>
+        <div class="hero-art" data-image-id="featured" data-alt="Featured website design by Olasunkanmi Daniel" aria-label="Featured website project">
+          <div class="art-topline"><span>FEATURED WEBSITE</span><span>01</span></div>
+          <!-- To add an image in HTML, change this src to a relative file path such as ./images/your-project.jpg. -->
+          <img src="./assets/projects/project_saas_dashboard_1790982925253.jpg" alt="Featured website design by Olasunkanmi Daniel" />
+          <div class="art-caption"><span>Your featured project</span><span>Frontend development</span></div>
+          <span class="art-sticker">Ideas<br />in motion</span>
+          <!-- Upload with Add portrait, or replace this placeholder with an img using your relative photo path. Browser uploads stay in this browser; use an HTML src for published images. -->
+          <div class="profile-photo-slot" data-image-id="portrait" data-alt="Portrait of Olasunkanmi Daniel" aria-label="Profile photo">
+            <div class="image-placeholder" role="img" aria-label="Add a profile photo">OD</div>
+          </div>
+        </div>
+        <a class="scroll-cue" href="#work"><span class="scroll-line"></span> SCROLL TO EXPLORE</a>
+      </section>
+
+      <section class="ticker" aria-label="Areas of practice">
+        <div class="ticker-track"><span>Digital experiences</span><i>✳</i><span>Visual identities</span><i>✳</i><span>Motion & film</span><i>✳</i><span>Digital experiences</span><i>✳</i><span>Visual identities</span><i>✳</i><span>Motion & film</span><i>✳</i></div>
+      </section>
+
+      <section class="work-section page-shell section-space" id="work">
+        <div class="section-heading">
+          <div><p class="eyebrow">A few things I've made</p><h2><span data-work-field="heading">Selected work</span><span class="highlight">.</span></h2></div>
+          <div class="section-heading-aside">
+            <p class="section-note" data-work-field="intro">A mix of thoughtful design, expressive visuals, and carefully built digital products.</p>
+          </div>
+        </div>
+        <div class="project-grid">
+          <!-- Edit each image src to a local image path, or use its Add image control after opening the page. -->
+          <article class="project project-large">
+            <div class="project-image" data-image-id="project-1" data-alt="Website project by Olasunkanmi Daniel"><img src="./assets/projects/project_saas_dashboard_1790982925253.jpg" alt="Website project by Olasunkanmi Daniel" /></div>
+            <div class="project-info" data-project-editor="project-1"><div class="project-copy"><p class="project-type" data-project-field="category">FRONTEND DEVELOPMENT</p><h3 data-project-field="name">Website project</h3><p class="project-description" data-project-field="description">Add a short description of this website project.</p></div></div>
+          </article>
+          <article class="project">
+            <div class="project-image" data-image-id="project-2" data-alt="Graphic design project by Olasunkanmi Daniel"><img src="./assets/projects/brand_identity_mockup_1790983055930.jpg" alt="Graphic design project by Olasunkanmi Daniel" /></div>
+            <div class="project-info" data-project-editor="project-2"><div class="project-copy"><p class="project-type" data-project-field="category">GRAPHIC DESIGN</p><h3 data-project-field="name">Visual identity</h3><p class="project-description" data-project-field="description">Add a short description of this graphic design project.</p></div></div>
+          </article>
+          <article class="project">
+            <div class="project-image" data-image-id="project-3" data-alt="Video editing project by Olasunkanmi Daniel"><img src="./assets/projects/video_editing_suite_1790983077416.jpg" alt="Video editing project by Olasunkanmi Daniel" /></div>
+            <div class="project-info" data-project-editor="project-3"><div class="project-copy"><p class="project-type" data-project-field="category">VIDEO EDITING</p><h3 data-project-field="name">Video project</h3><p class="project-description" data-project-field="description">Add a short description of this video editing project.</p></div></div>
+          </article>
+          <article class="project project-large">
+            <div class="project-image" data-image-id="project-4" data-alt="Interactive web development project by Olasunkanmi Daniel"><img src="./assets/projects/project_3d_web_1790983121743.jpg" alt="Interactive web development project by Olasunkanmi Daniel" /></div>
+            <div class="project-info" data-project-editor="project-4"><div class="project-copy"><p class="project-type" data-project-field="category">FRONTEND DEVELOPMENT</p><h3 data-project-field="name">Interactive website</h3><p class="project-description" data-project-field="description">Add a short description of this interactive website.</p></div></div>
+          </article>
+          <article class="project">
+            <div class="project-image" data-image-id="project-5" data-alt="Interface design project by Olasunkanmi Daniel"><img src="./assets/projects/mobile_app_design_1790983178661.jpg" alt="Interface design project by Olasunkanmi Daniel" /></div>
+            <div class="project-info" data-project-editor="project-5"><div class="project-copy"><p class="project-type" data-project-field="category">GRAPHIC & DIGITAL DESIGN</p><h3 data-project-field="name">Interface design</h3><p class="project-description" data-project-field="description">Add a short description of this interface design project.</p></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-section" id="about">
+        <div class="page-shell about-layout">
+          <div class="about-label"><p class="eyebrow">A little about me</p><span class="about-mark">OD<span>.</span></span></div>
+          <div class="about-copy"><h2>Olasunkanmi Daniel.<br /><span class="highlight">Design-minded developer.</span></h2><p>I create frontend websites and digital experiences, design graphics and visual identities, and edit video. Bringing these skills together helps me shape ideas from the first visual concept to the finished experience.</p><p>I care about clear communication, thoughtful details, and work that feels made for its audience.</p><a class="text-link" href="#contact">Have a project in mind? Let's talk <span aria-hidden="true">↗</span></a></div>
+          <div class="stats-row"><div><strong>03</strong><small>Creative disciplines</small></div><div><strong>01</strong><small>Thoughtful process</small></div><div><strong>UI</strong><small>Frontend websites</small></div><div><strong>AV</strong><small>Design & video</small></div></div>
+        </div>
+      </section>
+
+      <section class="services-section page-shell section-space" id="services">
+        <div class="section-heading"><div><p class="eyebrow">How I can help</p><h2>Three ways to<br />make an <span class="highlight">impact.</span></h2></div><p class="section-note">Bring me in for a focused skill or let the disciplines work together. Both make for good things.</p></div>
+        <div class="service-list">
+          <article class="service-row"><span class="service-number">01</span><div><h3>Creative development</h3><p>Fast, accessible websites and interactive experiences built with care.</p></div><span class="service-tools">JavaScript · WebGL · UI engineering</span><span class="service-symbol">↗</span></article>
+          <article class="service-row"><span class="service-number">02</span><div><h3>Graphic & digital design</h3><p>Distinctive identities and intuitive interfaces with a point of view.</p></div><span class="service-tools">Branding · UI/UX · Art direction</span><span class="service-symbol">↗</span></article>
+          <article class="service-row"><span class="service-number">03</span><div><h3>Video & motion</h3><p>Confident edits, rich color, and motion that gives a story its pulse.</p></div><span class="service-tools">Editing · Color · Motion graphics</span><span class="service-symbol">↗</span></article>
+        </div>
+      </section>
+
+      <section class="resume-band">
+        <div class="page-shell resume-inner"><div><p class="eyebrow">Experience, in one place</p><h2>Want the full picture?</h2><p>Roles, skills, and the rest of the details are in my CV.</p></div><a class="button button-light" href="./olasunkanmi-daniel-cv.pdf" target="_blank" rel="noopener">View or download CV <span aria-hidden="true">↓</span></a></div>
+      </section>
+
+      <section class="contact-section page-shell" id="contact">
+        <p class="eyebrow">Have a good one in mind?</p><h2>Let's make<br />something <span class="highlight">matter.</span></h2>
+        <!-- Replace this placeholder email address with your own in both href and visible text. -->
+        <a class="contact-email" href="mailto:olasunkanmidaniel77984@gmail.com">olasunkanmidaniel77984@gmail.com <span aria-hidden="true">↗</span></a>
+        <div class="contact-bottom"><p>Frontend development · Graphic design · Video editing</p><div class="social-links"><a href="https://linkedin.com" target="_blank" rel="noopener">LinkedIn ↗</a><a href="https://behance.net" target="_blank" rel="noopener">Behance ↗</a><a href="https://github.com" target="_blank" rel="noopener">GitHub ↗</a></div></div>
+      </section>
+    </main>
+
+    <footer class="site-footer"><a class="wordmark" href="#top">OD<span>.</span></a><p>Olasunkanmi Daniel · Frontend · Design · Video</p><a href="#top">Back to top ↑</a></footer>
+  </body>
+</html>
