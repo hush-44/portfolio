@@ -278,7 +278,7 @@ const addProjectImageControls = (slot, imageId, labelText, maxImages = 4) => {
     slot.querySelector('.image-upload-control')?.remove();
 
     const gallery = document.createElement('div');
-    gallery.className = `project-gallery${images.length === 1 ? ' project-gallery-single' : ''}`;
+    gallery.className = `project-gallery${images.length === 1 ? ' project-gallery-single' : ''}${images.length === 2 ? ' project-gallery-two' : ''}`;
 
     images.forEach((imageSource, index) => {
       const item = document.createElement('div');
@@ -448,4 +448,3 @@ if (imageViewer) {
     if (event.key === 'ArrowLeft') moveImage(-1);
   });
 }
-
