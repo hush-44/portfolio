@@ -173,6 +173,18 @@ const showImagePlaceholder = (image) => {
   image.replaceWith(placeholder);
 };
 
+const getSavedProjectImages = (imageId) => {
+  const savedImages = readStoredValue(`${storagePrefix}image-${imageId}`);
+  if (!savedImages) return null;
+  try {
+    const parsedImages = JSON.parse(savedImages);
+    if (Array.isArray(parsedImages)) return parsedImages;
+  } catch {
+    return [savedImages];
+  }
+  return null;
+};
+
 const resizeImage = (file, maxDimension) => new Promise((resolve, reject) => {
   const source = new Image();
   const objectUrl = URL.createObjectURL(file);
@@ -238,6 +250,100 @@ const addImageControl = (slot, imageId, labelText) => {
   });
 };
 
+const addProjectImageControls = (slot, imageId, labelText) => {
+  const maxImages = 4;
+  const initialImages = [...slot.querySelectorAll('img')];
+  const savedImages = getSavedProjectImages(imageId);
+  let images = savedImages ?? initialImages.map((image) => image.getAttribute('src'));
+  initialImages.forEach((image) => image.remove());
+
+  const renderGallery = (sessionOnly = false) => {
+    slot.querySelector('.project-gallery')?.remove();
+    slot.querySelector('.image-upload-control')?.remove();
+
+    const gallery = document.createElement('div');
+    gallery.className = `project-gallery${images.length === 1 ? ' project-gallery-single' : ''}`;
+
+    images.forEach((imageSource, index) => {
+      const item = document.createElement('div');
+      const image = document.createElement('img');
+      item.className = 'project-gallery-item';
+      image.src = imageSource;
+      image.alt = slot.dataset.alt || `Olasunkanmi Daniel ${labelText}`;
+      image.addEventListener('error', () => showImagePlaceholder(image), { once: true });
+      item.append(image);
+
+      if (localEditingEnabled && images.length > 1) {
+        const removeButton = document.createElement('button');
+        removeButton.className = 'project-gallery-remove';
+        removeButton.type = 'button';
+        removeButton.textContent = '×';
+        removeButton.setAttribute('aria-label', `Remove image ${index + 1} from ${labelText}`);
+        removeButton.addEventListener('click', () => {
+          images = images.filter((_, imageIndex) => imageIndex !== index);
+          renderGallery(!saveImage(imageId, JSON.stringify(images)));
+        });
+        item.append(removeButton);
+      }
+
+      gallery.append(item);
+    });
+
+    slot.prepend(gallery);
+
+    if (!localEditingEnabled) return;
+    const label = document.createElement('label');
+    const text = document.createElement('span');
+    const picker = document.createElement('input');
+    label.className = 'image-upload-control';
+    text.textContent = `${sessionOnly ? 'Add images · temporary' : 'Add images'} (${images.length}/${maxImages})`;
+    picker.type = 'file';
+    picker.accept = 'image/*';
+    picker.multiple = true;
+    picker.setAttribute('aria-label', `Add up to ${maxImages - images.length} images to ${labelText}`);
+    label.append(text, picker);
+    slot.append(label);
+
+    picker.addEventListener('change', async () => {
+      const selectedFiles = [...picker.files];
+      if (!selectedFiles.length) return;
+      const availableSlots = maxImages - images.length;
+      const acceptedFiles = selectedFiles
+        .filter((file) => file.type.startsWith('image/'))
+        .slice(0, availableSlots);
+
+      if (selectedFiles.some((file) => !file.type.startsWith('image/'))) {
+        window.alert('Only image files can be added.');
+      }
+      if (selectedFiles.length > availableSlots) {
+        window.alert(`Each work item can show up to ${maxImages} images.`);
+      }
+      if (!acceptedFiles.length) {
+        picker.value = '';
+        return;
+      }
+
+      try {
+        const addedImages = [];
+        for (const file of acceptedFiles) {
+          addedImages.push(await resizeImage(file, 1200));
+        }
+        images = [...images, ...addedImages];
+        renderGallery(!saveImage(imageId, JSON.stringify(images)));
+      } catch (error) {
+        window.alert(error.name === 'QuotaExceededError'
+          ? 'Browser storage is full. Try smaller images.'
+          : 'An image could not be loaded. Please try again.');
+      }
+
+      picker.value = '';
+    });
+  };
+
+  if (images.length > maxImages) images = images.slice(0, maxImages);
+  renderGallery();
+};
+
 document.querySelectorAll('[data-image-id]').forEach((slot) => {
   const imageId = slot.dataset.imageId;
   const image = slot.querySelector('img');
@@ -247,12 +353,16 @@ document.querySelectorAll('[data-image-id]').forEach((slot) => {
       ? 'featured image'
       : `image ${imageId.replace('project-', '')}`;
 
-  if (image) {
-    slot.dataset.alt = image.alt;
-    image.addEventListener('error', () => showImagePlaceholder(image), { once: true });
-    if (image.complete && image.naturalWidth === 0) showImagePlaceholder(image);
-  }
+  if (image) slot.dataset.alt = image.alt;
 
-  if (localEditingEnabled) addImageControl(slot, imageId, labelText);
+  if (imageId.startsWith('project-')) {
+    addProjectImageControls(slot, imageId, labelText);
+  } else {
+    if (image) {
+      image.addEventListener('error', () => showImagePlaceholder(image), { once: true });
+      if (image.complete && image.naturalWidth === 0) showImagePlaceholder(image);
+    }
+    if (localEditingEnabled) addImageControl(slot, imageId, labelText);
+  }
 });
 
