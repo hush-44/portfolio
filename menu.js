@@ -250,8 +250,24 @@ const addImageControl = (slot, imageId, labelText) => {
   });
 };
 
-const addProjectImageControls = (slot, imageId, labelText) => {
-  const maxImages = 4;
+const addProjectImageControls = (slot, imageId, labelText, maxImages = 4) => {
+  const mediaType = slot.dataset.mediaType;
+  if (mediaType === 'video') {
+    const video = slot.querySelector('video');
+    if (video) {
+      video.addEventListener('error', () => {
+        const placeholder = document.createElement('div');
+        const projectTitle = slot.closest('.project')?.querySelector('.project-info h3')?.textContent;
+        placeholder.className = 'image-placeholder';
+        placeholder.setAttribute('role', 'img');
+        placeholder.setAttribute('aria-label', slot.dataset.alt || 'Featured video');
+        placeholder.textContent = projectTitle || 'Video project';
+        video.replaceWith(placeholder);
+      }, { once: true });
+    }
+    return;
+  }
+
   const initialImages = [...slot.querySelectorAll('img')];
   const savedImages = getSavedProjectImages(imageId);
   let images = savedImages ?? initialImages.map((image) => image.getAttribute('src'));
@@ -356,7 +372,8 @@ document.querySelectorAll('[data-image-id]').forEach((slot) => {
   if (image) slot.dataset.alt = image.alt;
 
   if (imageId.startsWith('project-')) {
-    addProjectImageControls(slot, imageId, labelText);
+    const maxImages = Number(slot.dataset.maxImages || 4);
+    addProjectImageControls(slot, imageId, labelText, maxImages);
   } else {
     if (image) {
       image.addEventListener('error', () => showImagePlaceholder(image), { once: true });
@@ -365,4 +382,70 @@ document.querySelectorAll('[data-image-id]').forEach((slot) => {
     if (localEditingEnabled) addImageControl(slot, imageId, labelText);
   }
 });
+
+const imageViewer = document.querySelector('#image-viewer');
+
+if (imageViewer) {
+  const viewerImage = imageViewer.querySelector('.image-viewer-image');
+  const viewerTitle = imageViewer.querySelector('.image-viewer-title');
+  const viewerCount = imageViewer.querySelector('.image-viewer-count');
+  const viewerClose = imageViewer.querySelector('.image-viewer-close');
+  const viewerPrevious = imageViewer.querySelector('.image-viewer-previous');
+  const viewerNext = imageViewer.querySelector('.image-viewer-next');
+  let activeImages = [];
+  let activeIndex = 0;
+  let touchStartX = null;
+
+  const displayImage = () => {
+    const image = activeImages[activeIndex];
+    if (!image) return;
+    viewerImage.src = image.currentSrc || image.src;
+    viewerImage.alt = image.alt;
+    viewerTitle.textContent = image.closest('.project')?.querySelector('h3')?.textContent || 'Portfolio image';
+    viewerCount.textContent = `${activeIndex + 1} / ${activeImages.length}`;
+    viewerPrevious.disabled = activeImages.length < 2;
+    viewerNext.disabled = activeImages.length < 2;
+  };
+
+  const moveImage = (direction) => {
+    if (activeImages.length < 2) return;
+    activeIndex = (activeIndex + direction + activeImages.length) % activeImages.length;
+    displayImage();
+  };
+
+  document.querySelector('.project-grid')?.addEventListener('click', (event) => {
+    if (!(event.target instanceof HTMLImageElement) || !event.target.closest('.project-gallery-item')) return;
+    activeImages = [...event.target.closest('.project-gallery').querySelectorAll('.project-gallery-item img')];
+    activeIndex = activeImages.indexOf(event.target);
+    displayImage();
+    imageViewer.showModal();
+    viewerClose.focus({ preventScroll: true });
+  });
+
+  viewerClose.addEventListener('click', () => imageViewer.close());
+  viewerPrevious.addEventListener('click', () => moveImage(-1));
+  viewerNext.addEventListener('click', () => moveImage(1));
+  imageViewer.addEventListener('click', (event) => {
+    if (event.target === imageViewer) imageViewer.close();
+  });
+  imageViewer.addEventListener('wheel', (event) => {
+    if (Math.abs(event.deltaY) > 10) {
+      event.preventDefault();
+      moveImage(event.deltaY > 0 ? 1 : -1);
+    }
+  }, { passive: false });
+  imageViewer.addEventListener('touchstart', (event) => {
+    touchStartX = event.changedTouches[0].clientX;
+  }, { passive: true });
+  imageViewer.addEventListener('touchend', (event) => {
+    if (touchStartX === null) return;
+    const swipeDistance = event.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(swipeDistance) > 45) moveImage(swipeDistance < 0 ? 1 : -1);
+    touchStartX = null;
+  }, { passive: true });
+  imageViewer.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') moveImage(1);
+    if (event.key === 'ArrowLeft') moveImage(-1);
+  });
+}
 
